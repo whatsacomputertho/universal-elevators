@@ -1,0 +1,28 @@
+[package]
+name = "universal-elevators-plugin"
+version = "0.1.0"
+authors = ["whatsacomputertho"]
+edition = "2021"
+description = "A WebAssembly plugin for the Universal Elevators elevator simulation game"
+readme = "README.md"
+homepage = "https://docs.rs/elevate-lib"
+repository = "https://github.com/whatsacomputertho/universal-elevators-plugin"
+license-file = "LICENSE"
+keywords = ["elevator","simulation","library","rust","elevate"]
+categories = ["simulation","visualization"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+cfg-if = { version = "1.0.0" }
+getrandom = { version = "0.2", features = ["js"] }
+rand = { version = "0.8.5" }
+elevate-lib = { version = "0.1.1" }
+wasm-bindgen = "0.2.84"
+
+[features]
+default = []
+std = ["rand/std"]
