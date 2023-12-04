@@ -40,6 +40,6 @@ pub fn update_game_state() {
 
 #[wasm_bindgen]
 pub fn get_game_state() -> String {
-  let game = GAME.lock().unwrap();
+  let mut game = GAME.lock().unwrap();
   game.get_game_state()
 }

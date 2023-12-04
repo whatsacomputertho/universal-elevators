@@ -20,7 +20,8 @@ crate-type = ["cdylib", "rlib"]
 lazy_static = { version = "1.4.0" }
 getrandom = { version = "0.2", features = ["js"] }
 rand = { version = "0.8.5" }
-elevate-lib = { version = "0.1.1" }
+json = { version = "0.12.4" }
+elevate-lib = { version = "0.1.4" }
 wasm-bindgen = "0.2.84"
 
 [features]
