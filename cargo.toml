@@ -17,7 +17,7 @@ categories = ["simulation","visualization"]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-cfg-if = { version = "1.0.0" }
+lazy_static = { version = "1.4.0" }
 getrandom = { version = "0.2", features = ["js"] }
 rand = { version = "0.8.5" }
 elevate-lib = { version = "0.1.1" }
