@@ -19,9 +19,9 @@ impl<T: ElevatorController> ElevatorGame<T> {
     /// ## Example
     ///
     /// ```
-    /// let controller_rng = rand::StdRng::new();
-    /// let my_rng = rand::StdRng::new();
-    /// let my_building: Building = Building::fron(
+    /// let controller_rng = rand::StdRng::from_seed(rand::thread_rng().gen());
+    /// let my_rng = rand::StdRng::from_seed(rand::thread_rng().gen());
+    /// let my_building: Building = Building::from(
     ///     4_usize,
     ///     2_usize,
     ///     0.5_f64,
