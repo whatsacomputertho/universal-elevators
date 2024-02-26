@@ -7,17 +7,23 @@ use elevate_lib::floors::Floors;
 use elevate_lib::people::People;
 use elevate_lib::building::Building;
 
+//Input source libraries
+use crate::input::ElevatorGameInput;
+use crate::upgrade::{ElevatorGameUpgrade, ElevatorGameUpgrades};
+
 /// # `ElevatorGame` struct
 ///
 /// The `ElevatorGame` is the main Universal Elevators game object.
-pub struct ElevatorGame<T: ElevatorController> {
-    pub controller: T,
+pub struct ElevatorGame {
+    controller: Box<dyn ElevatorController + Send>,
+    upgrades: ElevatorGameUpgrades,
+    tips: f64,
     rng: StdRng,
     time_steps: i32
 }
 
 //Implement the ElevatorGame interface
-impl<T: ElevatorController> ElevatorGame<T> {
+impl ElevatorGame {
     /// Initialize a new ElevatorGame given an `ElevatorController`
     /// implementation and a `StdRng` (from the rand library).
     ///
@@ -38,15 +44,17 @@ impl<T: ElevatorController> ElevatorGame<T> {
     ///     my_building,
     ///     controller_rng
     /// );
-    /// let my_game: ElevatorGame<RandomController> = ElevatorGame::from(
-    ///     my_controller,
+    /// let my_game: ElevatorGame = ElevatorGame::from(
+    ///     Box::new(my_controller),
     ///     my_rng
     /// );
     /// ```
-    pub fn from(controller: T, rng: StdRng) -> ElevatorGame<T> {
+    pub fn from(controller: Box<dyn ElevatorController + Send>, upgrades: ElevatorGameUpgrades, rng: StdRng) -> ElevatorGame {
         //Initialize the game
         ElevatorGame {
             controller: controller,
+            upgrades: upgrades,
+            tips: 0.0_f64,
             rng: rng,
             time_steps: 0_i32
         }
@@ -54,18 +62,40 @@ impl<T: ElevatorController> ElevatorGame<T> {
 
     /// Update the game state, for now this just increments the
     /// counter.
-    pub fn update_game_state(&mut self) {
+    pub fn update_game_state(&mut self, input: ElevatorGameInput) {
         //Make updates to the building prior to updating its elevators
         {
             //Mutably borrow the controller's building
             let building: &mut Building = self.controller.get_building_mut();
+
+            //If the player collected tips, then collect the tips from the
+            //building
+            if input.collect_tips {
+                self.tips += building.collect_tips();
+            }
+
+            //If the player added a floor or elevator, then add the floor
+            //and/or elevator to the building
+            if input.append_floor && self.upgrades.append_floor.is_enough(self.tips) {
+                let cost: f64 = self.upgrades.append_floor.buy();
+                self.tips -= cost;
+                building.append_floor();
+            }
+            if input.append_elevator && self.upgrades.append_elevator.is_enough(self.tips) {
+                let cost: f64 = self.upgrades.append_elevator.buy();
+                self.tips -= cost;
+                let energy_up: f64 = building.elevators[0].energy_up;
+                let energy_down: f64 = building.elevators[0].energy_down;
+                let energy_coef: f64 = building.elevators[0].energy_coef;
+                building.append_elevator(energy_up, energy_down, energy_coef);
+            }
 
             //Generate people arriving and leaving
             building.gen_people_arriving(&mut self.rng);
             building.gen_people_leaving(&mut self.rng);
 
             //Move people on and off the elevators and out of the building
-            building.flush_first_floor();
+            building.flush_and_update_tips(&mut self.rng);
             building.exchange_people_on_elevator();
         }
 
@@ -91,16 +121,32 @@ impl<T: ElevatorController> ElevatorGame<T> {
     /// Get the game state, for now this just returns a string with
     /// the counter state.
     pub fn get_game_state(&mut self) -> String {
+        //Borrow the controller's building
+        let building: &Building = self.controller.get_building();
+
         //Initialize a game state string
         let mut game_state = object!{
             floors: [],
             elevators: [],
-            avg_energy_spent: 0.0_f64,
-            avg_wait_time: 0.0_f64
+            upgrades: {
+                append_floor: {
+                    name: self.upgrades.append_floor.get_name(),
+                    description: self.upgrades.append_floor.get_description(),
+                    cost: self.upgrades.append_floor.get_cost()
+                },
+                append_elevator: {
+                    name: self.upgrades.append_elevator.get_name(),
+                    description: self.upgrades.append_elevator.get_description(),
+                    cost: self.upgrades.append_elevator.get_cost()
+                }
+            },
+            avg_energy_spent: building.avg_energy,
+            avg_wait_time: building.avg_wait_time,
+            building_tips: building.tot_tips,
+            collected_tips: self.tips
         };
 
         //Append the floor state for each floor
-        let building: &Building = self.controller.get_building();
         for floor in building.floors.iter() {
             //Add the floor state to the game state object
             let _ = game_state["floors"].push(
@@ -121,11 +167,6 @@ impl<T: ElevatorController> ElevatorGame<T> {
                 }
             );
         }
-
-        //Update the average energy spent and average wait time
-        //in the game state object
-        game_state["avg_energy_spent"] = building.avg_energy.into();
-        game_state["avg_wait_time"] = building.avg_wait_time.into();
 
         //Serialize and return the game state JSON string
         json::stringify(game_state)
