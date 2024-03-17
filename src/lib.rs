@@ -26,6 +26,8 @@ lazy_static! {
             4_usize,
             2_usize,
             0.5_f64,
+            100_usize,
+            10_usize,
             5.0_f64,
             2.5_f64,
             0.5_f64

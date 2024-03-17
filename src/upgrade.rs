@@ -6,7 +6,9 @@
 pub struct ElevatorGameUpgrades {
     pub collect_tips: CollectTipsUpgrade,
     pub append_floor: AppendFloorUpgrade,
-    pub append_elevator: AppendElevatorUpgrade
+    pub append_elevator: AppendElevatorUpgrade,
+    pub add_floor_capacity: AddFloorCapacityUpgrade,
+    pub add_elevator_capacity: AddElevatorCapacityUpgrade
 }
 
 impl ElevatorGameUpgrades {
@@ -15,7 +17,9 @@ impl ElevatorGameUpgrades {
         ElevatorGameUpgrades {
             collect_tips: CollectTipsUpgrade::new(),
             append_floor: AppendFloorUpgrade::new(10_f64, 1.5_f64),
-            append_elevator: AppendElevatorUpgrade::new(100_f64, 1.9_f64)
+            append_elevator: AppendElevatorUpgrade::new(100_f64, 1.9_f64),
+            add_floor_capacity: AddFloorCapacityUpgrade::new(10_f64, 1.1_f64),
+            add_elevator_capacity: AddElevatorCapacityUpgrade::new(10_f64, 1.1_f64)
         }
     }
 }
@@ -206,6 +210,160 @@ impl AppendElevatorUpgrade {
 }
 
 impl ElevatorGameUpgrade for AppendElevatorUpgrade {
+    /// Get the cost of the upgrade
+    fn get_cost(&self) -> f64 {
+        self.base_cost + f64::powf(self.base_coef, self.num_buys as f64)
+    }
+
+    /// Check if the given amount is less than the cost of the upgrade
+    fn is_enough(&self, money: f64) -> bool {
+        money >= self.base_cost + f64::powf(self.base_coef, self.num_buys as f64)
+    }
+
+    /// Get the maximum number of floors one can buy
+    fn get_max_buys(&self) -> usize {
+        self.max_buys
+    }
+
+    /// Get the name of the upgrade
+    fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    /// Get the description of the upgrade
+    fn get_description(&self) -> &str {
+        &self.description
+    }
+
+    /// Update the upgrade properties after buying
+    fn buy(&mut self) -> f64 {
+        //Make sure the upgrade can be purchased
+        if self.num_buys > self.max_buys {
+            panic!("Cannot buy upgrade: {}", self.name);
+        }
+
+        //Calculate the cost before incrementing the num buys
+        let cost: f64 = self.base_cost + f64::powf(self.base_coef, self.num_buys as f64);
+
+        //If it can be purchased, then update the number of buys
+        self.num_buys += 1;
+
+        //Return the cost
+        cost
+    }
+}
+
+/// # `AddFloorCapacityUpgrade` struct
+///
+/// The `AddFloorCapacityUpgrade` struct is an upgrade for adding capacity
+/// to the floors of the player's buildings.  It is constantly available
+/// throughout the game.
+pub struct AddFloorCapacityUpgrade {
+    base_cost: f64,
+    base_coef: f64,
+    num_buys: usize,
+    max_buys: usize,
+    name: String,
+    description: String
+}
+
+impl AddFloorCapacityUpgrade {
+    /// Initialize an `AddFloorCapacityUpgrade` struct
+    pub fn new(base_cost: f64, base_coef: f64) -> AddFloorCapacityUpgrade {
+        //Set the name of the upgrade and the description
+        let name = "Add Floor Capacity".to_string();
+        let description = "Adds more capacity to your floors".to_string();
+
+        //Initialize and return the AddFloorCapacityUpgrade
+        AddFloorCapacityUpgrade {
+            base_cost: base_cost,
+            base_coef: base_coef,
+            num_buys: 0_usize,
+            max_buys: usize::MAX,
+            name: name,
+            description: description
+        }
+    }
+}
+
+impl ElevatorGameUpgrade for AddFloorCapacityUpgrade {
+    /// Get the cost of the upgrade
+    fn get_cost(&self) -> f64 {
+        self.base_cost + f64::powf(self.base_coef, self.num_buys as f64)
+    }
+
+    /// Check if the given amount is less than the cost of the upgrade
+    fn is_enough(&self, money: f64) -> bool {
+        money >= self.base_cost + f64::powf(self.base_coef, self.num_buys as f64)
+    }
+
+    /// Get the maximum number of floors one can buy
+    fn get_max_buys(&self) -> usize {
+        self.max_buys
+    }
+
+    /// Get the name of the upgrade
+    fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    /// Get the description of the upgrade
+    fn get_description(&self) -> &str {
+        &self.description
+    }
+
+    /// Update the upgrade properties after buying
+    fn buy(&mut self) -> f64 {
+        //Make sure the upgrade can be purchased
+        if self.num_buys > self.max_buys {
+            panic!("Cannot buy upgrade: {}", self.name);
+        }
+
+        //Calculate the cost before incrementing the num buys
+        let cost: f64 = self.base_cost + f64::powf(self.base_coef, self.num_buys as f64);
+
+        //If it can be purchased, then update the number of buys
+        self.num_buys += 1;
+
+        //Return the cost
+        cost
+    }
+}
+
+/// # `AddElevatorCapacityUpgrade` struct
+///
+/// The `AddElevatorCapacityUpgrade` struct is an upgrade for adding capacity
+/// to the floors of the player's buildings.  It is constantly available
+/// throughout the game.
+pub struct AddElevatorCapacityUpgrade {
+    base_cost: f64,
+    base_coef: f64,
+    num_buys: usize,
+    max_buys: usize,
+    name: String,
+    description: String
+}
+
+impl AddElevatorCapacityUpgrade {
+    /// Initialize an `AddElevatorCapacityUpgrade` struct
+    pub fn new(base_cost: f64, base_coef: f64) -> AddElevatorCapacityUpgrade {
+        //Set the name of the upgrade and the description
+        let name = "Add Elevator Capacity".to_string();
+        let description = "Adds more capacity to your elevators".to_string();
+
+        //Initialize and return the AddElevatorCapacityUpgrade
+        AddElevatorCapacityUpgrade {
+            base_cost: base_cost,
+            base_coef: base_coef,
+            num_buys: 0_usize,
+            max_buys: usize::MAX,
+            name: name,
+            description: description
+        }
+    }
+}
+
+impl ElevatorGameUpgrade for AddElevatorCapacityUpgrade {
     /// Get the cost of the upgrade
     fn get_cost(&self) -> f64 {
         self.base_cost + f64::powf(self.base_coef, self.num_buys as f64)
