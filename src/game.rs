@@ -79,15 +79,32 @@ impl ElevatorGame {
             if input.append_floor && self.upgrades.append_floor.is_enough(self.tips) {
                 let cost: f64 = self.upgrades.append_floor.buy();
                 self.tips -= cost;
-                building.append_floor();
+                let capacity: usize = building.floors[0].capacity;
+                building.append_floor(capacity);
             }
             if input.append_elevator && self.upgrades.append_elevator.is_enough(self.tips) {
                 let cost: f64 = self.upgrades.append_elevator.buy();
                 self.tips -= cost;
+                let capacity: usize = building.elevators[0].capacity;
                 let energy_up: f64 = building.elevators[0].energy_up;
                 let energy_down: f64 = building.elevators[0].energy_down;
                 let energy_coef: f64 = building.elevators[0].energy_coef;
-                building.append_elevator(energy_up, energy_down, energy_coef);
+                building.append_elevator(capacity, energy_up, energy_down, energy_coef);
+            }
+
+            //If the player added capacity to their floors or elevators,
+            //then update their capacities
+            if input.add_floor_capacity && self.upgrades.add_floor_capacity.is_enough(self.tips) {
+                let cost: f64 = self.upgrades.add_floor_capacity.buy();
+                self.tips -= cost;
+                let current_capacity: usize = building.floors[0].capacity;
+                building.floors.update_capacities(current_capacity + 100);
+            }
+            if input.add_elevator_capacity && self.upgrades.add_elevator_capacity.is_enough(self.tips) {
+                let cost: f64 = self.upgrades.add_elevator_capacity.buy();
+                self.tips -= cost;
+                let current_capacity: usize = building.elevators[0].capacity;
+                building.elevators.update_capacities(current_capacity + 10);
             }
 
             //Generate people arriving and leaving
@@ -152,6 +169,7 @@ impl ElevatorGame {
             let _ = game_state["floors"].push(
                 object!{
                     num_people: floor.get_num_people(),
+                    capacity: floor.capacity,
                     are_people_waiting: floor.are_people_waiting()
                 }
             );
@@ -163,6 +181,7 @@ impl ElevatorGame {
             let _ = game_state["elevators"].push(
                 object!{
                     num_people: elevator.get_num_people(),
+                    capacity: elevator.capacity,
                     floor_on: elevator.floor_on
                 }
             );
